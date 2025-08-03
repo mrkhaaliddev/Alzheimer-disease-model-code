@@ -11,6 +11,17 @@ TRAIN_DIR = 'dataset/train'
 TEST_DIR = 'dataset/test'
 
 # Helper to evaluate accuracy
+# New helper to load all images from both train and test as validation set
+
+def load_all_images_for_validation(classifier, train_dir, test_dir):
+    train_paths, train_labels = classifier._load_folder_data(train_dir)
+    test_paths, test_labels = classifier._load_folder_data(test_dir)
+    # Concatenate all
+    all_paths = np.concatenate([train_paths, test_paths])
+    all_labels = np.concatenate([train_labels, test_labels])
+    return all_paths, all_labels
+
+
 def evaluate_model_on_val(model_path, device):
     # Load model checkpoint
     checkpoint = torch.load(model_path, map_location=device)
@@ -41,15 +52,15 @@ def evaluate_model_on_val(model_path, device):
         print(f"❌ Failed to build model for architecture '{model_arch}'")
         return None, None, None
 
-    # Load data and get validation split
-    _, _, val_paths, val_labels, _, _ = classifier.load_data_from_folders(TRAIN_DIR, TEST_DIR)
+    # Load all images from both train and test as validation set
+    val_paths, val_labels = load_all_images_for_validation(classifier, TRAIN_DIR, TEST_DIR)
     val_dataset = AlzheimerDataset(val_paths, val_labels, classifier.get_val_transforms())
     val_loader = DataLoader(val_dataset, batch_size=classifier.batch_size, shuffle=False, num_workers=2, pin_memory=True)
 
     # Evaluate on validation set with progress bar
     correct = 0
     total = 0
-    print(f"Evaluating model on validation set ({len(val_dataset)} samples)...")
+    print(f"Evaluating model on ALL images from train and test ({len(val_dataset)} samples)...")
     with torch.no_grad():
         pbar = tqdm(val_loader, desc=f"Evaluating {os.path.basename(model_path)}", unit="batch")
         for i, (data, target) in enumerate(pbar, 1):

@@ -61,7 +61,7 @@ def make_prediction(model, image_path):
 
 # Model weights paths - Updated to match your actual model files
 MODEL_PATHS = {
-    'best': 'models/Resnet_50_alzheimer_classifier_90%_.pth',
+    'best': 'models/alzheimer_classifier_RESNET_50_MODEL_complete.pth',
     'complete': 'models/old_best_alzheimer_model_resnet_50.pth',
     'second': 'best_alzheimer_model.pth'
 }
@@ -116,6 +116,19 @@ if __name__ == "__main__":
             
         classifier.model.eval()
         print(f"✅ Model loaded successfully from {model_weights_path}")
+        
+        # ADD MODEL ACCURACY DISPLAY - Extract and show training/validation accuracy from saved model
+        if isinstance(checkpoint, dict) and 'history' in checkpoint:
+            history = checkpoint['history']
+            train_acc = history.get('train_acc', [])
+            val_acc = history.get('val_acc', [])
+            if train_acc and val_acc:
+                print(f"📈 Model Accuracy - Final Train: {train_acc[-1]:.1f}%, Final Val: {val_acc[-1]:.1f}%")
+            elif train_acc:
+                print(f"📈 Model Accuracy - Final Train: {train_acc[-1]:.1f}%")
+        else:
+            print("📈 Model Accuracy - Not available in this model file")
+            
     except Exception as e:
         print(f"❌ Error loading model weights: {e}")
         print(f"Error type: {type(e).__name__}")
